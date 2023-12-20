@@ -1,0 +1,4 @@
+api/
+!cmd/api
+internal/
+.env
