@@ -61,6 +61,29 @@ func handleGetCourse(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleGetDoctors(w http.ResponseWriter, r *http.Request, client *mongo.Client) {
+	w.Header().Set("Content-Type", "application/json")
+
+	doctorsCollection := client.Database("Go").Collection("Doctors")
+	cursor, err := doctorsCollection.Find(context.TODO(), bson.D{})
+
+	var result []bson.M
+
+	if err = cursor.All(context.TODO(), &result); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("displaying all results in a collection")
+	for _, res := range result {
+		fmt.Println(res)
+	}
+
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("Error loading .env file")
@@ -98,6 +121,9 @@ func main() {
 	fmt.Println("Starting GO API")
 
 	http.HandleFunc("/api/GetCourse", handleGetCourse)
+	http.HandleFunc("/api/GetDoctors", func(w http.ResponseWriter, r *http.Request) {
+		handleGetDoctors(w, r, client)
+	})
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 
 	if err != nil {
